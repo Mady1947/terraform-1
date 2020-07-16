@@ -139,6 +139,11 @@ func TestResourceChange_primitiveTypes(t *testing.T) {
         id  = "i-02ae66f368e8518a9"
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+    }
+`,
 		},
 		"string force-new update": {
 			Action: plans.DeleteThenCreate,
@@ -165,6 +170,11 @@ func TestResourceChange_primitiveTypes(t *testing.T) {
 -/+ resource "test_instance" "example" {
       ~ ami = "ami-BEFORE" -> "ami-AFTER" # forces replacement
         id  = "i-02ae66f368e8518a9"
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER" # forces replacement
     }
 `,
 		},
@@ -194,6 +204,11 @@ func TestResourceChange_primitiveTypes(t *testing.T) {
   ~ resource "test_instance" "example" {
       ~ ami = "ami-BEFORE" -> "ami-AFTER"
         id  = "i-02ae66f368e8518a9"
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
     }
 `,
 		},
@@ -349,6 +364,12 @@ new line
       ~ str      = "before" -> "after"
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id       = "blah" -> (known after apply)
+      ~ str      = "before" -> "after"
+    }
+`,
 		},
 
 		// tainted resources
@@ -407,6 +428,11 @@ new line
         name   = "name"
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      + forced = "example" # forces replacement
+    }
+`,
 		},
 		"force replacement with empty before value legacy": {
 			Action: plans.DeleteThenCreate,
@@ -433,6 +459,11 @@ new line
 -/+ resource "test_instance" "example" {
       + forced = "example" # forces replacement
         name   = "name"
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      + forced = "example" # forces replacement
     }
 `,
 		},
@@ -509,6 +540,17 @@ func TestResourceChange_JSON(t *testing.T) {
           ~ {
                 aaa = "value"
               + bbb = "new_value"
+            }
+        )
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ {
+              + bbb = "new_value"
+                ... = ...
             }
         )
     }
@@ -613,6 +655,21 @@ func TestResourceChange_JSON(t *testing.T) {
         )
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ {
+              ~ aaa = [
+                  ~ {
+                      ~ foo = "bar" -> "baz"
+                    },
+                    ...
+                ]
+            }
+        )
+    }
+`,
 		},
 		"force-new update": {
 			Action: plans.DeleteThenCreate,
@@ -642,6 +699,17 @@ func TestResourceChange_JSON(t *testing.T) {
           ~ {
                 aaa = "value"
               + bbb = "new_value"
+            } # forces replacement
+        )
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ {
+              + bbb = "new_value"
+                ... = ...
             } # forces replacement
         )
     }
@@ -767,6 +835,17 @@ func TestResourceChange_JSON(t *testing.T) {
         )
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ [
+              - "third",
+                ...
+            ]
+        )
+    }
+`,
 		},
 		"JSON list item addition": {
 			Action: plans.Update,
@@ -799,6 +878,17 @@ func TestResourceChange_JSON(t *testing.T) {
         )
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ [
+              + "third",
+                ...
+            ]
+        )
+    }
+`,
 		},
 		"JSON list object addition": {
 			Action: plans.Update,
@@ -826,6 +916,17 @@ func TestResourceChange_JSON(t *testing.T) {
           ~ {
                 first  = "111"
               + second = "222"
+            }
+        )
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ {
+              + second = "222"
+                ...    = ...
             }
         )
     }
@@ -867,6 +968,19 @@ func TestResourceChange_JSON(t *testing.T) {
         )
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ {
+              ~ Statement = [
+                  + "second",
+                    ...
+                ]
+            }
+        )
+    }
+`,
 		},
 		"JSON list of objects - adding item": {
 			Action: plans.Update,
@@ -898,6 +1012,19 @@ func TestResourceChange_JSON(t *testing.T) {
               + {
                   + two = "222"
                 },
+            ]
+        )
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ [
+              + {
+                  + two = "222"
+                },
+                ...
             ]
         )
     }
@@ -940,6 +1067,19 @@ func TestResourceChange_JSON(t *testing.T) {
         )
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ [
+              - {
+                  - two = "222"
+                },
+                ...
+            ]
+        )
+    }
+`,
 		},
 		"JSON object with list of objects": {
 			Action: plans.Update,
@@ -977,6 +1117,21 @@ func TestResourceChange_JSON(t *testing.T) {
         )
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ {
+              ~ parent = [
+                  + {
+                      + two = "222"
+                    },
+                    ...
+                ]
+            }
+        )
+    }
+`,
 		},
 		"JSON object double nested lists": {
 			Action: plans.Update,
@@ -1007,6 +1162,23 @@ func TestResourceChange_JSON(t *testing.T) {
                       ~ another_list = [
                             "111",
                           + "222",
+                        ]
+                    },
+                ]
+            }
+        )
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ json_field = jsonencode(
+          ~ {
+              ~ parent = [
+                  ~ {
+                      ~ another_list = [
+                          + "222",
+                            ...
                         ]
                     },
                 ]
@@ -1094,6 +1266,14 @@ func TestResourceChange_primitiveList(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      + list_field = [
+          + "new-element",
+        ]
+    }
+`,
 		},
 		"in-place update - first addition": {
 			Action: plans.Update,
@@ -1122,6 +1302,14 @@ func TestResourceChange_primitiveList(t *testing.T) {
 			ExpectedOutput: `  # test_instance.example will be updated in-place
   ~ resource "test_instance" "example" {
         ami        = "ami-STATIC"
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ list_field = [
+          + "new-element",
+        ]
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
       ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
       ~ list_field = [
           + "new-element",
@@ -1169,6 +1357,15 @@ func TestResourceChange_primitiveList(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ list_field = [
+          + "bbbb",
+            ...
+        ]
+    }
+`,
 		},
 		"force-new update - insertion": {
 			Action: plans.DeleteThenCreate,
@@ -1212,6 +1409,15 @@ func TestResourceChange_primitiveList(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ list_field = [ # forces replacement
+          + "bbbb",
+            ...
+        ]
+    }
+`,
 		},
 		"in-place update - deletion": {
 			Action: plans.Update,
@@ -1249,6 +1455,16 @@ func TestResourceChange_primitiveList(t *testing.T) {
           - "aaaa",
             "bbbb",
           - "cccc",
+        ]
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ list_field = [
+          - "aaaa",
+          - "cccc",
+            ...
         ]
     }
 `,
@@ -1316,6 +1532,16 @@ func TestResourceChange_primitiveList(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ list_field = [
+          - "aaaa",
+          - "bbbb",
+          - "cccc",
+        ]
+    }
+`,
 		},
 		"in-place update - null to empty": {
 			Action: plans.Update,
@@ -1342,6 +1568,12 @@ func TestResourceChange_primitiveList(t *testing.T) {
 			ExpectedOutput: `  # test_instance.example will be updated in-place
   ~ resource "test_instance" "example" {
         ami        = "ami-STATIC"
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      + list_field = []
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
       ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
       + list_field = []
     }
@@ -1386,6 +1618,16 @@ func TestResourceChange_primitiveList(t *testing.T) {
           - "bbbb",
           + (known after apply),
             "cccc",
+        ]
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ list_field = [
+          - "bbbb",
+          + (known after apply),
+            ...
         ]
     }
 `,
@@ -1434,6 +1676,17 @@ func TestResourceChange_primitiveList(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id         = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ list_field = [
+          - "bbbb",
+          + (known after apply),
+          + (known after apply),
+            ...
+        ]
+    }
+`,
 		},
 	}
 	runTestCases(t, testCases)
@@ -1474,6 +1727,14 @@ func TestResourceChange_primitiveSet(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      + set_field = [
+          + "new-element",
+        ]
+    }
+`,
 		},
 		"in-place update - first insertion": {
 			Action: plans.Update,
@@ -1502,6 +1763,14 @@ func TestResourceChange_primitiveSet(t *testing.T) {
 			ExpectedOutput: `  # test_instance.example will be updated in-place
   ~ resource "test_instance" "example" {
         ami       = "ami-STATIC"
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ set_field = [
+          + "new-element",
+        ]
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
       ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
       ~ set_field = [
           + "new-element",
@@ -1549,6 +1818,15 @@ func TestResourceChange_primitiveSet(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ set_field = [
+          + "bbbb",
+            ...
+        ]
+    }
+`,
 		},
 		"force-new update - insertion": {
 			Action: plans.DeleteThenCreate,
@@ -1592,6 +1870,15 @@ func TestResourceChange_primitiveSet(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ set_field = [ # forces replacement
+          + "bbbb",
+            ...
+        ]
+    }
+`,
 		},
 		"in-place update - deletion": {
 			Action: plans.Update,
@@ -1629,6 +1916,16 @@ func TestResourceChange_primitiveSet(t *testing.T) {
           - "aaaa",
             "bbbb",
           - "cccc",
+        ]
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ set_field = [
+          - "aaaa",
+          - "cccc",
+            ...
         ]
     }
 `,
@@ -1693,6 +1990,15 @@ func TestResourceChange_primitiveSet(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ set_field = [
+          - "aaaa",
+          - "bbbb",
+        ]
+    }
+`,
 		},
 		"in-place update - null to empty set": {
 			Action: plans.Update,
@@ -1719,6 +2025,12 @@ func TestResourceChange_primitiveSet(t *testing.T) {
 			ExpectedOutput: `  # test_instance.example will be updated in-place
   ~ resource "test_instance" "example" {
         ami       = "ami-STATIC"
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      + set_field = []
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
       ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
       + set_field = []
     }
@@ -1752,6 +2064,15 @@ func TestResourceChange_primitiveSet(t *testing.T) {
 			ExpectedOutput: `  # test_instance.example will be updated in-place
   ~ resource "test_instance" "example" {
         ami       = "ami-STATIC"
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ set_field = [
+          - "aaaa",
+          - "bbbb",
+        ] -> (known after apply)
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
       ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
       ~ set_field = [
           - "aaaa",
@@ -1799,6 +2120,16 @@ func TestResourceChange_primitiveSet(t *testing.T) {
         ]
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ set_field = [
+          - "bbbb",
+          ~ (known after apply),
+            ...
+        ]
+    }
+`,
 		},
 	}
 	runTestCases(t, testCases)
@@ -1839,6 +2170,14 @@ func TestResourceChange_map(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      + map_field = {
+          + "new-key" = "new-element"
+        }
+    }
+`,
 		},
 		"in-place update - first insertion": {
 			Action: plans.Update,
@@ -1867,6 +2206,14 @@ func TestResourceChange_map(t *testing.T) {
 			ExpectedOutput: `  # test_instance.example will be updated in-place
   ~ resource "test_instance" "example" {
         ami       = "ami-STATIC"
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ map_field = {
+          + "new-key" = "new-element"
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
       ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
       ~ map_field = {
           + "new-key" = "new-element"
@@ -1914,6 +2261,15 @@ func TestResourceChange_map(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ map_field = {
+          + "b" = "bbbb"
+            ... = ...
+        }
+    }
+`,
 		},
 		"force-new update - insertion": {
 			Action: plans.DeleteThenCreate,
@@ -1957,6 +2313,15 @@ func TestResourceChange_map(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ map_field = { # forces replacement
+          + "b" = "bbbb"
+            ... = ...
+        }
+    }
+`,
 		},
 		"in-place update - deletion": {
 			Action: plans.Update,
@@ -1994,6 +2359,16 @@ func TestResourceChange_map(t *testing.T) {
           - "a" = "aaaa" -> null
             "b" = "bbbb"
           - "c" = "cccc" -> null
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ map_field = {
+          - "a" = "aaaa" -> null
+          - "c" = "cccc" -> null
+            ... = ...
         }
     }
 `,
@@ -2065,6 +2440,15 @@ func TestResourceChange_map(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ id        = "i-02ae66f368e8518a9" -> (known after apply)
+      ~ map_field = {
+          ~ "b" = "bbbb" -> (known after apply)
+            ... = ...
+        }
+    }
+`,
 		},
 	}
 	runTestCases(t, testCases)
@@ -2125,6 +2509,11 @@ func TestResourceChange_nestedList(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+    }
+`,
 		},
 		"in-place update - creation": {
 			Action: plans.Update,
@@ -2175,6 +2564,13 @@ func TestResourceChange_nestedList(t *testing.T) {
       + root_block_device {}
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      + root_block_device {}
+    }
+`,
 		},
 		"in-place update - first insertion": {
 			Action: plans.Update,
@@ -2221,6 +2617,15 @@ func TestResourceChange_nestedList(t *testing.T) {
   ~ resource "test_instance" "example" {
       ~ ami = "ami-BEFORE" -> "ami-AFTER"
         id  = "i-02ae66f368e8518a9"
+
+      + root_block_device {
+          + volume_type = "gp2"
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
 
       + root_block_device {
           + volume_type = "gp2"
@@ -2289,6 +2694,15 @@ func TestResourceChange_nestedList(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      ~ root_block_device {
+          + new_field   = "new_value"
+        }
+    }
+`,
 		},
 		"force-new update (inside block)": {
 			Action: plans.DeleteThenCreate,
@@ -2341,6 +2755,15 @@ func TestResourceChange_nestedList(t *testing.T) {
 -/+ resource "test_instance" "example" {
       ~ ami = "ami-BEFORE" -> "ami-AFTER"
         id  = "i-02ae66f368e8518a9"
+
+      ~ root_block_device {
+          ~ volume_type = "gp2" -> "different" # forces replacement
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
 
       ~ root_block_device {
           ~ volume_type = "gp2" -> "different" # forces replacement
@@ -2403,6 +2826,15 @@ func TestResourceChange_nestedList(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      ~ root_block_device { # forces replacement
+          ~ volume_type = "gp2" -> "different"
+        }
+    }
+`,
 		},
 		"in-place update - deletion": {
 			Action: plans.Update,
@@ -2456,6 +2888,16 @@ func TestResourceChange_nestedList(t *testing.T) {
   ~ resource "test_instance" "example" {
       ~ ami = "ami-BEFORE" -> "ami-AFTER"
         id  = "i-02ae66f368e8518a9"
+
+      - root_block_device {
+          - new_field   = "new_value" -> null
+          - volume_type = "gp2" -> null
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
 
       - root_block_device {
           - new_field   = "new_value" -> null
@@ -2562,6 +3004,15 @@ func TestResourceChange_nestedSet(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      + root_block_device {
+          + volume_type = "gp2"
+        }
+    }
+`,
 		},
 		"in-place update - insertion": {
 			Action: plans.Update,
@@ -2617,6 +3068,19 @@ func TestResourceChange_nestedSet(t *testing.T) {
   ~ resource "test_instance" "example" {
       ~ ami = "ami-BEFORE" -> "ami-AFTER"
         id  = "i-02ae66f368e8518a9"
+
+      + root_block_device {
+          + new_field   = "new_value"
+          + volume_type = "gp2"
+        }
+      - root_block_device {
+          - volume_type = "gp2" -> null
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
 
       + root_block_device {
           + new_field   = "new_value"
@@ -2686,6 +3150,18 @@ func TestResourceChange_nestedSet(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      + root_block_device { # forces replacement
+          + volume_type = "different"
+        }
+      - root_block_device { # forces replacement
+          - volume_type = "gp2" -> null
+        }
+    }
+`,
 		},
 		"in-place update - deletion": {
 			Action: plans.Update,
@@ -2739,6 +3215,16 @@ func TestResourceChange_nestedSet(t *testing.T) {
   ~ resource "test_instance" "example" {
       ~ ami = "ami-BEFORE" -> "ami-AFTER"
         id  = "i-02ae66f368e8518a9"
+
+      - root_block_device {
+          - new_field   = "new_value" -> null
+          - volume_type = "gp2" -> null
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
 
       - root_block_device {
           - new_field   = "new_value" -> null
@@ -2804,6 +3290,15 @@ func TestResourceChange_nestedMap(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      + root_block_device "a" {
+          + volume_type = "gp2"
+        }
+    }
+`,
 		},
 		"in-place update - change attr": {
 			Action: plans.Update,
@@ -2863,6 +3358,15 @@ func TestResourceChange_nestedMap(t *testing.T) {
       ~ root_block_device "a" {
           + new_field   = "new_value"
             volume_type = "gp2"
+        }
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      ~ root_block_device "a" {
+          + new_field   = "new_value"
         }
     }
 `,
@@ -2935,6 +3439,16 @@ func TestResourceChange_nestedMap(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      + root_block_device "b" {
+          + new_field   = "new_value"
+          + volume_type = "gp2"
+        }
+    }
+`,
 		},
 		"force-new update (whole block)": {
 			Action: plans.DeleteThenCreate,
@@ -3001,6 +3515,15 @@ func TestResourceChange_nestedMap(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example must be replaced
+-/+ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      ~ root_block_device "a" { # forces replacement
+          ~ volume_type = "gp2" -> "different"
+        }
+    }
+`,
 		},
 		"in-place update - deletion": {
 			Action: plans.Update,
@@ -3061,6 +3584,16 @@ func TestResourceChange_nestedMap(t *testing.T) {
         }
     }
 `,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami = "ami-BEFORE" -> "ami-AFTER"
+
+      - root_block_device "a" {
+          - new_field   = "new_value" -> null
+          - volume_type = "gp2" -> null
+        }
+    }
+`,
 		},
 		"in-place sequence update - deletion": {
 			Action: plans.Update,
@@ -3109,70 +3642,189 @@ func TestResourceChange_nestedMap(t *testing.T) {
 	runTestCases(t, testCases)
 }
 
+func TestResourceChange_complex(t *testing.T) {
+	testCases := map[string]testCase{
+		"complex diff with suppressed elements": {
+			Action: plans.Update,
+			Mode:   addrs.ManagedResourceMode,
+			Before: cty.ObjectVal(map[string]cty.Value{
+				"id":         cty.StringVal("i-02ae66f368e8518a9"),
+				"ami":        cty.StringVal("ami-BEFORE"),
+				"json_field": cty.StringVal(`[{"one": "111", "two": "222", "three": "333"}, {"key": "val", "foo": "bar"}, {"letters": ["a", "b", "c"]}, [1, 2, 3], "foo"]`),
+			}),
+			After: cty.ObjectVal(map[string]cty.Value{
+				"id":         cty.StringVal("i-02ae66f368e8518a9"),
+				"ami":        cty.StringVal("ami-AFTER"),
+				"json_field": cty.StringVal(`[{"two": "2", "three": "333", "four": "444"}, {"key": "new", "foo": "foobar"}, {"letters": ["a", "c", "d"]}, [4, 5, 6], "foo", "bar"]`),
+			}),
+			Schema: &configschema.Block{
+				Attributes: map[string]*configschema.Attribute{
+					"id":         {Type: cty.String, Optional: true},
+					"ami":        {Type: cty.String, Optional: true},
+					"json_field": {Type: cty.String, Optional: true},
+				},
+			},
+			RequiredReplace: cty.NewPathSet(),
+			Tainted:         false,
+			ExpectedOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami        = "ami-BEFORE" -> "ami-AFTER"
+        id         = "i-02ae66f368e8518a9"
+      ~ json_field = jsonencode(
+          ~ [
+              ~ {
+                  + four  = "444"
+                  - one   = "111" -> null
+                    three = "333"
+                  ~ two   = "222" -> "2"
+                },
+              ~ {
+                  ~ foo = "bar" -> "foobar"
+                  ~ key = "val" -> "new"
+                },
+              ~ {
+                  ~ letters = [
+                        "a",
+                      - "b",
+                        "c",
+                      + "d",
+                    ]
+                },
+              - [
+                  - 1,
+                  - 2,
+                  - 3,
+                ],
+              + [
+                  + 4,
+                  + 5,
+                  + 6,
+                ],
+                "foo",
+              + "bar",
+            ]
+        )
+    }
+`,
+			ExpectedConciseOutput: `  # test_instance.example will be updated in-place
+  ~ resource "test_instance" "example" {
+      ~ ami        = "ami-BEFORE" -> "ami-AFTER"
+      ~ json_field = jsonencode(
+          ~ [
+              ~ {
+                  + four  = "444"
+                  - one   = "111" -> null
+                  ~ two   = "222" -> "2"
+                    ...   = ...
+                },
+              ~ {
+                  ~ foo = "bar" -> "foobar"
+                  ~ key = "val" -> "new"
+                },
+              ~ {
+                  ~ letters = [
+                      - "b",
+                      + "d",
+                        ...
+                    ]
+                },
+              - [
+                  - 1,
+                  - 2,
+                  - 3,
+                ],
+              + [
+                  + 4,
+                  + 5,
+                  + 6,
+                ],
+              + "bar",
+                ...
+            ]
+        )
+    }
+`,
+		},
+	}
+	runTestCases(t, testCases)
+}
+
 type testCase struct {
-	Action          plans.Action
-	Mode            addrs.ResourceMode
-	Before          cty.Value
-	After           cty.Value
-	Schema          *configschema.Block
-	RequiredReplace cty.PathSet
-	Tainted         bool
-	ExpectedOutput  string
+	Action                plans.Action
+	Mode                  addrs.ResourceMode
+	Before                cty.Value
+	After                 cty.Value
+	Schema                *configschema.Block
+	RequiredReplace       cty.PathSet
+	Tainted               bool
+	ExpectedOutput        string
+	ExpectedConciseOutput string
 }
 
 func runTestCases(t *testing.T, testCases map[string]testCase) {
 	color := &colorstring.Colorize{Colors: colorstring.DefaultColors, Disable: true}
 
 	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			ty := tc.Schema.ImpliedType()
+		for _, concise := range []bool{false, true} {
+			testName := name
+			if concise {
+				testName = name + " (concise)"
+			}
+			t.Run(testName, func(t *testing.T) {
+				ty := tc.Schema.ImpliedType()
 
-			beforeVal := tc.Before
-			switch { // Some fixups to make the test cases a little easier to write
-			case beforeVal.IsNull():
-				beforeVal = cty.NullVal(ty) // allow mistyped nulls
-			case !beforeVal.IsKnown():
-				beforeVal = cty.UnknownVal(ty) // allow mistyped unknowns
-			}
-			before, err := plans.NewDynamicValue(beforeVal, ty)
-			if err != nil {
-				t.Fatal(err)
-			}
+				beforeVal := tc.Before
+				switch { // Some fixups to make the test cases a little easier to write
+				case beforeVal.IsNull():
+					beforeVal = cty.NullVal(ty) // allow mistyped nulls
+				case !beforeVal.IsKnown():
+					beforeVal = cty.UnknownVal(ty) // allow mistyped unknowns
+				}
+				before, err := plans.NewDynamicValue(beforeVal, ty)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			afterVal := tc.After
-			switch { // Some fixups to make the test cases a little easier to write
-			case afterVal.IsNull():
-				afterVal = cty.NullVal(ty) // allow mistyped nulls
-			case !afterVal.IsKnown():
-				afterVal = cty.UnknownVal(ty) // allow mistyped unknowns
-			}
-			after, err := plans.NewDynamicValue(afterVal, ty)
-			if err != nil {
-				t.Fatal(err)
-			}
+				afterVal := tc.After
+				switch { // Some fixups to make the test cases a little easier to write
+				case afterVal.IsNull():
+					afterVal = cty.NullVal(ty) // allow mistyped nulls
+				case !afterVal.IsKnown():
+					afterVal = cty.UnknownVal(ty) // allow mistyped unknowns
+				}
+				after, err := plans.NewDynamicValue(afterVal, ty)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			change := &plans.ResourceInstanceChangeSrc{
-				Addr: addrs.Resource{
-					Mode: tc.Mode,
-					Type: "test_instance",
-					Name: "example",
-				}.Instance(addrs.NoKey).Absolute(addrs.RootModuleInstance),
-				ProviderAddr: addrs.AbsProviderConfig{
-					Provider: addrs.NewLegacyProvider("test"),
-					Module:   addrs.RootModule,
-				},
-				ChangeSrc: plans.ChangeSrc{
-					Action: tc.Action,
-					Before: before,
-					After:  after,
-				},
-				RequiredReplace: tc.RequiredReplace,
-			}
+				change := &plans.ResourceInstanceChangeSrc{
+					Addr: addrs.Resource{
+						Mode: tc.Mode,
+						Type: "test_instance",
+						Name: "example",
+					}.Instance(addrs.NoKey).Absolute(addrs.RootModuleInstance),
+					ProviderAddr: addrs.AbsProviderConfig{
+						Provider: addrs.NewLegacyProvider("test"),
+						Module:   addrs.RootModule,
+					},
+					ChangeSrc: plans.ChangeSrc{
+						Action: tc.Action,
+						Before: before,
+						After:  after,
+					},
+					RequiredReplace: tc.RequiredReplace,
+				}
 
-			output := ResourceChange(change, tc.Tainted, tc.Schema, color)
-			if output != tc.ExpectedOutput {
-				t.Fatalf("Unexpected diff.\ngot:\n%s\nwant:\n%s\n", output, tc.ExpectedOutput)
-			}
-		})
+				expectedOutput := tc.ExpectedOutput
+				if concise && tc.ExpectedConciseOutput != "" {
+					expectedOutput = tc.ExpectedConciseOutput
+				}
+
+				output := ResourceChange(change, tc.Tainted, tc.Schema, color, concise)
+				if output != expectedOutput {
+					t.Fatalf("Unexpected diff.\ngot:\n%s\nwant:\n%s\n", output, expectedOutput)
+				}
+			})
+		}
 	}
 }
